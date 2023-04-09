@@ -1,7 +1,7 @@
 [project]
 name = "jet-physics-and-machine-learning"
 version = "0.1"
-dependencies = ["uproot", "chromo", "fastjet"]
+dependencies = ["uproot", "chromo==0.3.0rc1", "fastjet", "numpy", "pandas", "scikit-learn", "polars", "pickle-mixin", "tensorflow-macos"]
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff", "black", "pdbpp"]
