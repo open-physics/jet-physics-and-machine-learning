@@ -1,7 +1,7 @@
 [project]
 name = "jet-physics-and-machine-learning"
 version = "0.1"
-dependencies = ["uproot"]
+dependencies = ["uproot", "chromo", "fastjet"]
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff", "black", "pdbpp"]
@@ -42,4 +42,3 @@ ignore = [
     "PGH001",  # No eval allowed
     "PLC1901", # empty string is falsey (but I don't want to rely on such weak typing)
 ]
-
