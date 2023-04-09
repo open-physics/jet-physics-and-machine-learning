@@ -1,7 +1,7 @@
 # jet-physics-and-machine-learning
 
 ## A. Dev Environment
-Set up your dev environment by following instructions [here](https://github.com/open-physics/jet-physics-and-machine-learning/blob/master/dev-environment-readme.md).
+Set up your dev environment by following instructions [here](dev-environment-readme.md).
 
 ## B. Physics Environment
 For your physics environment, you need
@@ -9,7 +9,7 @@ For your physics environment, you need
 2. [FastJet](https://github.com/scikit-hep/fastjet): You need this for its algorithms to cluster jets.
 3. [Uproot](https://github.com/scikit-hep/uproot5): You need this for reading and writing ROOT files in pure Python and NumPy.
 
-All the above packages are available at PyPI and are pip-installed via pyproject.toml at [dev environment](#markdown-header-a-dev-environment).
+All the above packages are available at PyPI and are pip-installed via pyproject.toml at [dev environment](#a-dev-environment).
 
 ## C. Physics Workflow in brief
 1. Generate pp collision events from Pythia.
