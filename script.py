@@ -1,4 +1,5 @@
 import argparse
+import os
 import subprocess
 
 # Parse command-line options
@@ -12,6 +13,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 IMAGE_NAME = "jet-physics"
+WORK_HOME = "/usr/local/jet-physics-and-machine-learning"
 
 # Build the Docker image if the --build option is set
 if args.build:
@@ -19,4 +21,15 @@ if args.build:
 
 # Run the Docker container if the --run option is set
 if args.run:
-    subprocess.run(["docker", "run", "-it", f"{IMAGE_NAME}", "bash"])
+    current_dir = os.getcwd()
+    subprocess.run(
+        [
+            "docker",
+            "run",
+            "-it",
+            "-v",
+            f"{current_dir}:/{WORK_HOME}",
+            f"{IMAGE_NAME}",
+            "bash",
+        ]
+    )
