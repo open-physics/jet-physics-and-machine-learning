@@ -4,8 +4,8 @@ version = "0.1"
 dependencies = ["uproot", "chromo==0.3.0rc1", "fastjet", "numpy", "pandas", "matplotlib", "scikit-learn", "polars", "pickle-mixin"]
 
 # pip-compile --output-file=requirements.txt --extra=dev pyproject.toml
-# pip-compile --output-file=requirements.txt --extra=dev --conditional pyproject.toml
-# pip-compile --output-file=macos-requirements.txt --extra=dev --conditional --pip-args="--platform macosx_10_15_x86_64" pyproject.toml
+# pip-compile --output-file=requirements.txt --extra=dev --extra=linux pyproject.toml
+# pip-compile --output-file=macos-requirements.txt --extra=dev --extra=macos pyproject.toml
 [project.optional-dependencies]
 dev = ["pytest", "ruff", "black", "pdbpp"]
 linux = ["tf-nightly"]
