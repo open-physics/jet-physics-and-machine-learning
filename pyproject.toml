@@ -1,10 +1,15 @@
 [project]
 name = "jet-physics-and-machine-learning"
 version = "0.1"
-dependencies = ["uproot", "chromo==0.3.0rc1", "fastjet", "numpy", "pandas", "matplotlib", "scikit-learn", "polars", "pickle-mixin", "tensorflow-macos"]
+dependencies = ["uproot", "chromo==0.3.0rc1", "fastjet", "numpy", "pandas", "matplotlib", "scikit-learn", "polars", "pickle-mixin"]
 
+# pip-compile --output-file=requirements.txt --extra=dev pyproject.toml
+# pip-compile --output-file=requirements.txt --extra=dev --extra=linux pyproject.toml
+# pip-compile --output-file=macos-requirements.txt --extra=dev --extra=macos pyproject.toml
 [project.optional-dependencies]
 dev = ["pytest", "ruff", "black", "pdbpp"]
+linux = ["tf-nightly"]
+macos = ["tensorflow-macos"]
 
 [tool.black]
 # Same as PEP8.
