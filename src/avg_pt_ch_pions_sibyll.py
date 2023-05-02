@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 
 def main():
 
-    kinematics = chromo.kinematics.CenterOfMass(13 * chromo.constants.TeV, "proton", "proton")
-    generator = chromo.models.Sibyll23d(kinematics)
+    kinematics = chromo.kinematics.centerofmass(13 * chromo.constants.tev, "proton", "proton")
+    generator = chromo.models.sibyll23d(kinematics)
 
     nevent = 0
     avg_pt = 0
