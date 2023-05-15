@@ -17,5 +17,5 @@ WORKDIR ${WORK_HOME}
 COPY pyproject.toml .
 RUN pip3 install pip-tools
 COPY requirements.txt .
-RUN pip-compile --extra=dev pyproject.toml --upgrade --resolver=backtracking
+RUN pip-compile --extra=dev --extra=linux pyproject.toml --upgrade --resolver=backtracking
 RUN pip3 install --no-cache-dir -r requirements.txt
