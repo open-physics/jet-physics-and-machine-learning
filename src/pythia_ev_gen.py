@@ -3,8 +3,9 @@ from chromo.kinematics import CenterOfMass
 from chromo.models import Pythia8
 from chromo.constants import TeV
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-
+import awkward as ak
 
 # Create a new ROOT file and add a TTree
 file = uproot.recreate("output.root") 
@@ -22,7 +23,7 @@ def main():
     evt_list = []
     pt_list = []
     eta_list = []
-    for event in pythia(5000):
+    for event in pythia(5):
         ev = event.final_state()
         tr_eta = ev.eta
         tr_pid = np.abs(ev.pid)
@@ -38,7 +39,7 @@ def main():
             avg_eta = np.mean(tr_eta)
             eta_list.append(avg_eta)
 
-    breakpoint()
+    # breakpoint()
 
     plt.hist(pt_list, bins=10, edgecolor="blue", linewidth=0.5)
     plt.xlabel("average pt")
@@ -53,14 +54,30 @@ def main():
     
     plt.hist(eta_list, bins=10, edgecolor="red", linewidth=0.5)
     plt.show()
+    plt.savefig('ist.jpg')
     # breakpoint()
     
     # Read the TTree back from the file to check the data was saved correctly
     from pprint import pprint
     with uproot.open("output.root") as f:
         pprint(f["mytree"].arrays())
-        pprint(f["mytree"].keys())
+        pprint(type(f["mytree"].arrays()))
 
+
+        data = f['mytree'].arrays()
+        pprint(f["mytree"].keys())
+        cols = f['mytree'].keys()
+
+    # df =  pd.DataFrame(list(data), columns=list(cols))
+    # df =  pd.DataFrame.from_records(data)
+    # df1 = pd.json_normalize(data)
+    df1 = ak.to_dataframe(data)
+
+        
+    
+
+    # print(df)
+    print(df1)
 
 if __name__ == "__main__":
     main()
