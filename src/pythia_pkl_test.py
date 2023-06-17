@@ -1,3 +1,4 @@
+# storing event using pickle
 import numpy as np
 from chromo.constants import TeV
 from chromo.kinematics import CenterOfMass
