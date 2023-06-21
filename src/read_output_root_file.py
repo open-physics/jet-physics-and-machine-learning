@@ -2,17 +2,20 @@
 # import time
 from pprint import pprint
 import uproot
+
 # import pandas as pd
 
 
 def root_file():
     """define the path to root file"""
     # file1_root = uproot.open("~/PycharmProjects/jet-physics-and-machine-learning/output_10k.root")
-    file_root = uproot.open("~/PycharmProjects/jet-physics-and-machine-learning/uproot_pythia.root")
-    return file_root 
+    file_root = uproot.open(
+        "~/PycharmProjects/jet-physics-and-machine-learning/uproot_pythia.root"
+    )
+    return file_root
 
     # breakpoint()
-   
+
 
 def read_root():
     file_root = root_file()
@@ -29,21 +32,20 @@ def read_root():
     # file_root["event_0"]["tr_eta"].array(library="np")
     # file_root["event_0"]["tr_eta"].array(library="pd")
 
-
     # no. of events are stored in root file as different trees
     # Each event-tree has no. of branches storing event-info (e.g., pt, eta, phi, pid, mass etc)
-    # trees means different events 
+    # trees means different events
     # branches means event-info
 
     events = file_root.keys()
-    # loop on no of events/trees 
+    # loop on no of events/trees
     for event in events:
         # assign each event as separate tree
         tree = file_root[event]
         # branches = len(tree)
         # print(f"Number of branches in tree '{event}': {len(tree)}")
-        
-        # assign branche names 
+
+        # assign branche names
         branch_names = tree.keys()
         # loop on branches of each tree/event
         for branch_name in branch_names:
@@ -54,8 +56,6 @@ def read_root():
             print(data[:10])
 
     file_root.close()
-    
-
 
 
 def root_to_csv():
@@ -78,8 +78,5 @@ def root_to_csv():
     # dataframe.to_csv("amptsm.csv")
 
 
-
-
 if __name__ == "__main__":
     read_root()
-
