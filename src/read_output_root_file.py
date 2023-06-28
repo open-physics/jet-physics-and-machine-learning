@@ -1,29 +1,26 @@
-""" Convert root file to csv using uproot """
+""" Read root file using uproot """
 # import time
-from pprint import pprint
+# from pprint import pprint
 import uproot
-
-# import pandas as pd
+import fastjet._pyjet
+import awkward as ak
 
 
 def root_file():
     """define the path to root file"""
-    # file1_root = uproot.open("~/PycharmProjects/jet-physics-and-machine-learning/output_10k.root")
     file_root = uproot.open(
         "~/PycharmProjects/jet-physics-and-machine-learning/uproot_pythia.root"
     )
     return file_root
 
-    # breakpoint()
 
 
 def read_root():
     file_root = root_file()
 
-    pprint(file_root.keys())
-    pprint(file_root.values())
-
     # some CHECKS on root file:
+    # pprint(file_root.keys())
+    # pprint(file_root.values())
     # file_root.classnames()
     # file_root["event_0"].show()
     # file_root["event_0"].typenames()
@@ -38,24 +35,57 @@ def read_root():
     # branches means event-info
 
     events = file_root.keys()
-    # loop on no of events/trees
+    # loop on no. of events/trees
     for event in events:
         # assign each event as separate tree
         tree = file_root[event]
-        # branches = len(tree)
-        # print(f"Number of branches in tree '{event}': {len(tree)}")
-
-        # assign branche names
-        branch_names = tree.keys()
+        # create list of particles
+        particles = []
         # loop on branches of each tree/event
-        for branch_name in branch_names:
-            branch = tree[branch_name]
-            data = branch.array()
+        # for particle in tree.arrays():
+        #     px = particle["tr_px"]
+        #     py = particle["tr_py"]
+        #     pz = particle["tr_pz"]
+        #     en = particle["tr_en"]
 
-            # print(f"Contents of branch '{branch_name}' of tree '{event}':")
-            print(data[:10])
+            # particles.append(fastjet.PseudoJet(px, py, pz, en))    
+            # particles.append(fastjet.PseudoJet(px, py, pz, en))    
 
-    file_root.close()
+
+        R = 0.99
+        jet_def = fastjet.JetDefinition(fastjet.antikt_algorithm, R)
+        cs = fastjet._pyjet.AwkwardClusterSequence(tree.arrays(), jet_def)
+        # jets = sorted(cs.inclusive_jets(), key=lambda jet: -jet.pt())
+        jets = cs.inclusive_jets()
+        # breakpoint()
+        sorted_jets = []
+        for jet in jets:
+            sorted_jets.append(jet)
+
+        breakpoint()
+        # print("Clustering with", jet_def.description())
+
+    # # print the jets
+    # print("        pt y phi")
+    # for i, jet in enumerate(jets):
+    #     print("jet", i, ":", jet.pt(), jet.rap(), jet.phi())
+    #     constituents = jet.constituents()
+    #     for j, constituent in enumerate(constituents):
+    #         print("    constituent", j, "'s pt:", constituent.pt())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def root_to_csv():
