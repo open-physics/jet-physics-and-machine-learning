@@ -1,18 +1,21 @@
 """ Read root file using uproot """
 # import time
 # from pprint import pprint
+import numpy as np
+import math
 import uproot
 import fastjet._pyjet
-import awkward as ak
+import matplotlib.pyplot as plt
+
+# import seaborn as sns
 
 
 def root_file():
-    """define the path to root file"""
+    """define path to root file"""
     file_root = uproot.open(
         "~/PycharmProjects/jet-physics-and-machine-learning/uproot_pythia.root"
     )
     return file_root
-
 
 
 def read_root():
@@ -35,56 +38,82 @@ def read_root():
     # branches means event-info
 
     events = file_root.keys()
+    particle_array = []
     # loop on no. of events/trees
     for event in events:
         # assign each event as separate tree
         tree = file_root[event]
-        # create list of particles
-        particles = []
-        # loop on branches of each tree/event
-        # for particle in tree.arrays():
-        #     px = particle["tr_px"]
-        #     py = particle["tr_py"]
-        #     pz = particle["tr_pz"]
-        #     en = particle["tr_en"]
+        particle_array = tree.arrays()
 
-            # particles.append(fastjet.PseudoJet(px, py, pz, en))    
-            # particles.append(fastjet.PseudoJet(px, py, pz, en))    
-
-
-        R = 0.99
+        R = 0.7
+        pt_min = 300
+        eta_max = 0.9
         jet_def = fastjet.JetDefinition(fastjet.antikt_algorithm, R)
-        cs = fastjet._pyjet.AwkwardClusterSequence(tree.arrays(), jet_def)
-        # jets = sorted(cs.inclusive_jets(), key=lambda jet: -jet.pt())
-        jets = cs.inclusive_jets()
-        # breakpoint()
-        sorted_jets = []
-        for jet in jets:
-            sorted_jets.append(jet)
+        cs = fastjet._pyjet.AwkwardClusterSequence(particle_array, jet_def)
+
+        raw_jets = cs.inclusive_jets()#.to_list()
+        constituent_jets = cs.constituents()#.to_list()
+        jet_selector = fastjet.SelectorPtMin(pt_min) & fastjet.SelectorAbsEtaMax(eta_max)
+
+        # jets_array = np.array([fastjet.PseudoJet(j.px(), j.py(), j.pz(), j.E()) for j in jets])
+        # jets_vector = fastjet.vectorPJ()
+        # for jet in jets_array:
+        #     jets_vector.append(jet)
+        #     jets_vector.push_back(jet)
+
+        # selected_jets = jet_selector(jets_vector)
+
+        pt_list = []
+        enjet_list = []
+        mjet_list = []
 
         breakpoint()
-        # print("Clustering with", jet_def.description())
+        
+        jets = []
+        for jet in raw_jets:
+            px = jet["px"]
+            py = jet["py"]
+            pz = jet["pz"]
+            en = jet["E"]
+            pt = np.sqrt(px**2 + py**2)
+            # momentum = np.sqrt(px**2 + py**2 + pz**2)
+            # mass_squared = en**2 - momentum**2
+            
+            # if mass_squared >= 0:
+            #     mass = np.sqrt(mass_squared)
+            # 
+            #     threshold = 1.865
+            #     if mass < threshold:
+            #         print("Jet falls into a specific category based on low mass")
+            #     else:
+            #         print("Jet falls into a specific category based on high mass")
+            # else:
+            #     print("mass is negative")
 
-    # # print the jets
-    # print("        pt y phi")
-    # for i, jet in enumerate(jets):
-    #     print("jet", i, ":", jet.pt(), jet.rap(), jet.phi())
-    #     constituents = jet.constituents()
-    #     for j, constituent in enumerate(constituents):
-    #         print("    constituent", j, "'s pt:", constituent.pt())
+
+            jet["pt"] = pt
+            jets.append(jet)
+            pt_list.append(pt)
+            enjet_list.append(en)
+            
+            
+        breakpoint()
+        sorted_jets = sorted(jets, key=lambda jet: -jet["pt"])
 
 
 
+    # print("Clustering with", jet_def.description())
+    # # ----------------
+    # fig, ax = plt.subplots()  # figsize=(7,5))
 
-
-
-
-
-
-
-
-
-
+    # plt.hist(
+    #     pt_list,
+    #     bins=50,
+    # )
+    # plt.xlabel("pt")
+    # plt.show()
+    # plt.close()
+    # plt.savefig("pt.png")
 
 
 
