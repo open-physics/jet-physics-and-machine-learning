@@ -1,11 +1,18 @@
 # storing event using uproot and pickle file format
+import os
 import pickle
+
 import numpy as np
 import uproot
 from chromo.constants import TeV
 from chromo.kinematics import CenterOfMass
 from chromo.models import Pythia8
 from particle import Particle
+
+workdir = os.path.realpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+)
+file_name = f"{workdir}/data/uproot_pythia.root"
 
 
 def run_conditions():
@@ -40,11 +47,7 @@ def main():
     pythia = Pythia8(evt_kin, seed=45, config=config)
 
     all_events = []
-    mult = []
-    mult_plus = []
-    mult_minus = []
-    mult_zero = []
-    f = uproot.recreate("uproot_pythia.root")
+    f = uproot.recreate(file_name)
     # uproot.recreate("uproot_pythia2.root")
     for event in pythia(5):
         # sanity check: skip if event has no tracks or has no D0 meson
@@ -53,14 +56,12 @@ def main():
             continue
         event_final = event.final_state()
         pid = event_final.pid
-        eta = np.array(event_final.eta)
-        phi = np.array(event_final.phi)
+        np.array(event_final.eta)
+        np.array(event_final.phi)
         px = np.array(event_final.px)
         py = np.array(event_final.py)
         pz = np.array(event_final.pz)
         en = np.array(event_final.en)
-        pt = event_final.pt
-        mass = event_final.m
         charge = event_final.charge
 
         # create dictionary to store event properties event-by-event
@@ -71,8 +72,6 @@ def main():
         single_event["E"] = en
         single_event["ch"] = charge
         single_event["pid"] = pid
-
-        breakpoint()
 
         all_events.append(single_event)
         f[f"event_{event.nevent-1}"] = single_event
