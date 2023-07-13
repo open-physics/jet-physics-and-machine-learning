@@ -1,20 +1,19 @@
 """ Read root file using uproot """
 # import time
 # from pprint import pprint
-import numpy as np
-import math
-import uproot
-import fastjet._pyjet
-import matplotlib.pyplot as plt
+import os
 
-# import seaborn as sns
+import fastjet._pyjet
+import numpy as np
+import uproot
 
 
 def root_file():
     """define path to root file"""
-    file_root = uproot.open(
-        "~/PycharmProjects/jet-physics-and-machine-learning/uproot_pythia.root"
+    workdir = os.path.realpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
     )
+    file_root = uproot.open(f"{workdir}/data/uproot_pythia.root")
     return file_root
 
 
@@ -46,14 +45,14 @@ def read_root():
         particle_array = tree.arrays()
 
         R = 0.7
-        pt_min = 300
-        eta_max = 0.9
+        # pt_min = 300
+        # eta_max = 0.9
         jet_def = fastjet.JetDefinition(fastjet.antikt_algorithm, R)
         cs = fastjet._pyjet.AwkwardClusterSequence(particle_array, jet_def)
 
-        raw_jets = cs.inclusive_jets()#.to_list()
-        constituent_jets = cs.constituents()#.to_list()
-        jet_selector = fastjet.SelectorPtMin(pt_min) & fastjet.SelectorAbsEtaMax(eta_max)
+        raw_jets = cs.inclusive_jets()  # .to_list()
+        # constituent_jets = cs.constituents()#.to_list()
+        # jet_selector = fastjet.SelectorPtMin(pt_min) & fastjet.SelectorAbsEtaMax(eta_max)
 
         # jets_array = np.array([fastjet.PseudoJet(j.px(), j.py(), j.pz(), j.E()) for j in jets])
         # jets_vector = fastjet.vectorPJ()
@@ -65,23 +64,19 @@ def read_root():
 
         pt_list = []
         enjet_list = []
-        mjet_list = []
 
-        breakpoint()
-        
         jets = []
         for jet in raw_jets:
             px = jet["px"]
             py = jet["py"]
-            pz = jet["pz"]
             en = jet["E"]
             pt = np.sqrt(px**2 + py**2)
             # momentum = np.sqrt(px**2 + py**2 + pz**2)
             # mass_squared = en**2 - momentum**2
-            
+
             # if mass_squared >= 0:
             #     mass = np.sqrt(mass_squared)
-            # 
+            #
             #     threshold = 1.865
             #     if mass < threshold:
             #         print("Jet falls into a specific category based on low mass")
@@ -90,17 +85,15 @@ def read_root():
             # else:
             #     print("mass is negative")
 
-
             jet["pt"] = pt
             jets.append(jet)
             pt_list.append(pt)
             enjet_list.append(en)
-            
-            
-        breakpoint()
+
         sorted_jets = sorted(jets, key=lambda jet: -jet["pt"])
+        sorted_pt = [jet.pt for jet in sorted_jets]
 
-
+        return sorted_pt
 
     # print("Clustering with", jet_def.description())
     # # ----------------
@@ -114,27 +107,6 @@ def read_root():
     # plt.show()
     # plt.close()
     # plt.savefig("pt.png")
-
-
-
-def root_to_csv():
-    # t0 = time.time()
-    dfs = []
-    tree = file1_root["mytree"]
-    for key in tree.keys():
-        print(key, tree[key].array())
-        # print(key, len(tree[key].array()))
-        # print(key)
-        value = tree[key].array()
-        # data_frame = pd.DataFrame({key: value})
-        # dfs.append(data_frame)
-
-        # breakpoint()
-    # dataframe = pd.concat(dfs, axis=1)
-    # t1 = time.time()
-    # print(t1-t0)
-
-    # dataframe.to_csv("amptsm.csv")
 
 
 if __name__ == "__main__":
