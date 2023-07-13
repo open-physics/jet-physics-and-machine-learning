@@ -7,7 +7,7 @@ dependencies = ["uproot", "chromo==0.3.0rc1", "fastjet", "numpy", "pandas", "mat
 # pip-compile --output-file=requirements.txt --extra=dev --extra=linux pyproject.toml
 # pip-compile --output-file=macos-requirements.txt --extra=dev --extra=macos pyproject.toml
 [project.optional-dependencies]
-dev = ["pytest", "ruff", "black", "pdbpp"]
+dev = ["pytest", "ruff", "black", "pdbpp", "isort"]
 linux = ["tf-nightly"]
 macos = ["tensorflow-macos"]
 
@@ -19,29 +19,32 @@ profile = "black"
 
 [tool.ruff]
 select = [
-    "E", "F", "W", # flake8
-    "B", "B904",   # flake8-bugbear
-    "I",           # isort
-    "C4",          # flake8-comprehensions
-    "ISC",         # flake8-implicit-str-concat
-    "PGH",         # pygrep-hooks
-    "PIE",         # flake8-pie
-    "PL",          # pylint
-    "PT",          # flake8-pytest-style
-    "RUF",         # Ruff-specific
-    "SIM",         # flake8-simplify
-    "T20",         # flake8-print
-    "UP",          # pyupgrade
-    "YTT",         # flake8-2020
+  "E",
+  "F",
+  "W", # flake8
+  "B",
+  "B904", # flake8-bugbear
+  "I", # isort
+  "C4", # flake8-comprehensions
+  "ISC", # flake8-implicit-str-concat
+  "PGH", # pygrep-hooks
+  "PIE", # flake8-pie
+  "PL", # pylint
+  "PT", # flake8-pytest-style
+  "RUF", # Ruff-specific
+  "SIM", # flake8-simplify
+  "T20", # flake8-print
+  "UP", # pyupgrade
+  "YTT" # flake8-2020
 ]
 ignore = [
-    "E501",
-    "E722",
-    "PLR",
-    "PLW0120", # else on loop without break
-    "SIM118",  # key in dict, broken since uproot doesn't behave like a dict
-    "PGH003",  # too-broad type ignore
-    "SIM114",  # Combine `if` branches using logical `or` operator
-    "PGH001",  # No eval allowed
-    "PLC1901", # empty string is falsey (but I don't want to rely on such weak typing)
+  "E501",
+  "E722",
+  "PLR",
+  "PLW0120", # else on loop without break
+  "SIM118", # key in dict, broken since uproot doesn't behave like a dict
+  "PGH003", # too-broad type ignore
+  "SIM114", # Combine `if` branches using logical `or` operator
+  "PGH001", # No eval allowed
+  "PLC1901" # empty string is falsey (but I don't want to rely on such weak typing)
 ]
