@@ -1,32 +1,59 @@
+---
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
-  hooks:
-  - id: check-added-large-files
-  - id: check-case-conflict
-  - id: check-merge-conflict
-  - id: check-symlinks
-  - id: check-yaml
-  - id: debug-statements
-  - id: end-of-file-fixer
-  - id: mixed-line-ending
-  - id: requirements-txt-fixer
-  - id: trailing-whitespace
-  - id: no-commit-to-branch
-    args: ['--branch', 'master']
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 'v4.4.0'
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: debug-statements
 
-# Black
-- repo: https://github.com/psf/black
-  rev: '23.7.0'
-  hooks:
-  - id: black
+  # Mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.4.1'
+    hooks:
+      - id: mypy
+        verbose: true
+        args: [--show-error-codes, --ignore-missing-imports]
+        additional_dependencies: ['types-requests', 'tokenize-rt==3.2.0']
 
-# Ruff
-- repo: https://github.com/charliermarsh/ruff-pre-commit
-  # Ruff version.
-  rev: 'v0.0.278'
-  hooks:
-  - id: ruff
-    args: ["--fix", "--show-fixes"]
+  # Ruff
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    # Ruff version.
+    rev: 'v0.0.278'
+    hooks:
+      - id: ruff
+        # args: [--fix, --exit-non-zero-on-fix]
+        args: [--fix, --ignore, "E501", --ignore, "I001"]
+
+  # Black
+  - repo: https://github.com/psf/black
+    rev: '23.7.0'
+    hooks:
+      - id: black
+
+  # isort
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: ["--profile", "black", "--filter-files"]
+
+  # yamllint
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        args: [--strict]
+
+  # tomlsort
+  - repo: https://github.com/pappasam/toml-sort
+    rev: v0.23.1
+    hooks:
+      - id: toml-sort
+      - id: toml-sort-fix
