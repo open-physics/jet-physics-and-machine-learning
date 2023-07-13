@@ -33,8 +33,55 @@ def particle_info(event, index):
 
     return {
         "particle_info": [name, pid, index],
-        "children_info": [child_names, child_pids, child_indices],
+        "children_info": {
+            "child_names": child_names,
+            "child_pids": child_pids,
+            "child_indices": child_indices,
+        },
     }
+
+
+def replace_children_with_parents(event):
+    """
+    We need charm hadrons, e.g. D0 meson in the particle container
+    of an event before we cluster the particles into jets.
+    So, we would like to replace the children of the charm hadron
+    with the hadron themselves.
+    """
+    # 1. Find charm hadron, i.e. 421 or D0 meson and its index.
+    # 2. Find its children, their indices, and their status values.
+    # 3. If status == 2, find their children, indices, and status values.
+    # 4. Repreat step 3, until status is 1.
+
+    # Replace D0 children with D0
+    D0meson = 421
+    if D0meson not in event.pid:
+        return
+    for i in range(len(event)):
+        # Step 1
+        if event.pid[i] == D0meson:
+            # Steps 2, 3, 4
+            final_generation = find_final_generation(event, i)
+            for particle_index in final_generation:
+                event.status[particle_index] = -1
+            event.status[i] = 1
+
+
+def find_final_generation(event, i, final_generation=None):
+    if final_generation is None:
+        final_generation = []
+    # Step 2
+    child_indices = particle_info(event, i)["children_info"]["child_indices"]
+    if child_indices[0] == child_indices[1]:
+        child_indices = [child_indices[0]]
+    for index in child_indices:
+        # Step 3
+        if event.status[index] == 2:
+            # Step 4
+            find_final_generation(event, index, final_generation)
+        elif event.status[index] == 1:
+            final_generation.append(index)
+    return final_generation
 
 
 def main():
@@ -54,7 +101,10 @@ def main():
         # if np.abs(ev.pid)==421:
         if len(event.pt) <= 0:  # or d0 not in event.pid:
             continue
-        event_final = event.final_state()
+
+        replace_children_with_parents(event)
+
+        event_final = event[event.status == 1]
         pid = event_final.pid
         np.array(event_final.eta)
         np.array(event_final.phi)
