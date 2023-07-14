@@ -1,6 +1,6 @@
 """ Read root file using uproot """
 # import time
-# from pprint import pprint
+import logging
 import os
 
 import fastjet._pyjet
@@ -17,6 +17,16 @@ def root_file():
     return file_root
 
 
+# def calculate_eta_phi(ppx, ppy, ppz):
+#     pt = np.sqrt(ppx**2 + ppy**2)
+#     p = np.sqrt(ppx**2 + ppy**2 + ppz**2)
+#     cos_theta = ppz/p
+#     theta = np.arccos(cos_theta)
+#     eta = -np.log(np.tan(theta/2))
+#     phi = np.arctan2(ppy, ppx)
+#     return pt, eta, phi
+
+
 def read_root():
     file_root = root_file()
 
@@ -31,23 +41,37 @@ def read_root():
     # file_root["event_0"]["tr_eta"].array(library="np")
     # file_root["event_0"]["tr_eta"].array(library="pd")
 
-    # no. of events are stored in root file as different trees
-    # Each event-tree has no. of branches storing event-info (e.g., pt, eta, phi, pid, mass etc)
-    # trees means different events
-    # branches means event-info
+    """
+    Information related to root file
+    # Number of events are stored in a root file as different trees
+    # Each event-tree has equal number of branches storing event-information (e.g., pt, eta, phi, pid, mass etc)
+    # Different Trees mean different events and corresponding branches store event-information
+    """
 
     events = file_root.keys()
     particle_array = []
-    # loop on no. of events/trees
+    # loop on no. of events
     for event in events:
         # assign each event as separate tree
         tree = file_root[event]
+        eta = tree["eta"].array()
+        phi = tree["phi"].array()
+        pid = tree["pid"].array()
+
+        # eta and phi of D0meson
+        index = np.where(pid == 421)
+        d0meson_eta = eta[index]
+        d0meson_phi = phi[index]
+
         particle_array = tree.arrays()
 
+        # define jet radius
         R = 0.7
         # pt_min = 300
         # eta_max = 0.9
+        # Define jet by providing the name of algorithm and R value
         jet_def = fastjet.JetDefinition(fastjet.antikt_algorithm, R)
+        # make the clusters by feeding the paricle array as well as "jet def"
         cs = fastjet._pyjet.AwkwardClusterSequence(particle_array, jet_def)
 
         raw_jets = cs.inclusive_jets()  # .to_list()
@@ -59,54 +83,47 @@ def read_root():
         # for jet in jets_array:
         #     jets_vector.append(jet)
         #     jets_vector.push_back(jet)
-
         # selected_jets = jet_selector(jets_vector)
 
         pt_list = []
-        enjet_list = []
-
+        phi_list = []
+        eta_list = []
         jets = []
+        # loop on all created jets
         for jet in raw_jets:
             px = jet["px"]
             py = jet["py"]
-            en = jet["E"]
+            pz = jet["pz"]
             pt = np.sqrt(px**2 + py**2)
-            # momentum = np.sqrt(px**2 + py**2 + pz**2)
-            # mass_squared = en**2 - momentum**2
-
-            # if mass_squared >= 0:
-            #     mass = np.sqrt(mass_squared)
-            #
-            #     threshold = 1.865
-            #     if mass < threshold:
-            #         print("Jet falls into a specific category based on low mass")
-            #     else:
-            #         print("Jet falls into a specific category based on high mass")
-            # else:
-            #     print("mass is negative")
+            p = np.sqrt(px**2 + py**2 + pz**2)
+            cos_theta = pz / p
+            theta = np.arccos(cos_theta)
+            eta = -np.log(np.tan(theta / 2))
+            phi = np.arctan2(py, px)
 
             jet["pt"] = pt
+            jet["eta"] = eta
+            jet["phi"] = phi
+
             jets.append(jet)
             pt_list.append(pt)
-            enjet_list.append(en)
+            eta_list.append(eta)
+            phi_list.append(phi)
+            # delta_phi_list.append(delta_phi)
+        delta_phi_list = d0meson_phi - phi_list
+        delta_eta_list = d0meson_eta - eta_list
+        delta_R_list = np.sqrt(delta_eta_list**2 + delta_phi_list**2)
+        closest_jets = delta_R_list[delta_R_list < R]
+        logging.info(closest_jets)
 
+        # pd.set_option('display.max_rows', len(df))
         sorted_jets = sorted(jets, key=lambda jet: -jet["pt"])
-        sorted_pt = [jet.pt for jet in sorted_jets]
+        [jet.pt for jet in sorted_jets]
+        # return sorted_pt
 
-        return sorted_pt
-
+        # print(delta_phi)
+        # pprint(delta_phi_list)
     # print("Clustering with", jet_def.description())
-    # # ----------------
-    # fig, ax = plt.subplots()  # figsize=(7,5))
-
-    # plt.hist(
-    #     pt_list,
-    #     bins=50,
-    # )
-    # plt.xlabel("pt")
-    # plt.show()
-    # plt.close()
-    # plt.savefig("pt.png")
 
 
 if __name__ == "__main__":

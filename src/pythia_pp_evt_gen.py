@@ -46,7 +46,7 @@ def replace_children_with_parents(event):
     We need charm hadrons, e.g. D0 meson in the particle container
     of an event before we cluster the particles into jets.
     So, we would like to replace the children of the charm hadron
-    with the hadron themselves.
+    with the hadron themselves i.e., parent particle.
     """
     # 1. Find charm hadron, i.e. 421 or D0 meson and its index.
     # 2. Find its children, their indices, and their status values.
@@ -106,8 +106,8 @@ def main():
 
         event_final = event[event.status == 1]
         pid = event_final.pid
-        np.array(event_final.eta)
-        np.array(event_final.phi)
+        eta = np.array(event_final.eta)
+        phi = np.array(event_final.phi)
         px = np.array(event_final.px)
         py = np.array(event_final.py)
         pz = np.array(event_final.pz)
@@ -120,6 +120,8 @@ def main():
         single_event["py"] = py
         single_event["pz"] = pz
         single_event["E"] = en
+        single_event["eta"] = eta
+        single_event["phi"] = phi
         single_event["ch"] = charge
         single_event["pid"] = pid
 
