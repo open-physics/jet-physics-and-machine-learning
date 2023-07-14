@@ -17,14 +17,27 @@ def root_file():
     return file_root
 
 
-# def calculate_eta_phi(ppx, ppy, ppz):
-#     pt = np.sqrt(ppx**2 + ppy**2)
-#     p = np.sqrt(ppx**2 + ppy**2 + ppz**2)
-#     cos_theta = ppz/p
-#     theta = np.arccos(cos_theta)
-#     eta = -np.log(np.tan(theta/2))
-#     phi = np.arctan2(ppy, ppx)
-#     return pt, eta, phi
+def calculate_jet_eta_phi(px, py, pz):
+    p = np.sqrt(px**2 + py**2 + pz**2)
+    cos_theta = pz / p
+    theta = np.arccos(cos_theta)
+    eta = -np.log(np.tan(theta / 2))
+    phi = np.arctan2(py, px)
+    return eta, phi
+
+
+def find_D0meson_in_jets(d0_phi, d0_eta, jet_phi_list, jet_eta_list, R) -> float | None:
+    D0_jet = None
+    delta_phi_list = d0_phi - jet_phi_list
+    delta_eta_list = d0_eta - jet_eta_list
+    delta_R_list = np.sqrt(delta_eta_list**2 + delta_phi_list**2)
+    closest_jets = delta_R_list[delta_R_list < R]
+    logging.info(closest_jets)
+    if len(closest_jets) > 1:
+        D0_jet = np.min(closest_jets)
+    elif len(closest_jets) == 1:
+        D0_jet = closest_jets[0]
+    return D0_jet
 
 
 def read_root():
@@ -95,11 +108,7 @@ def read_root():
             py = jet["py"]
             pz = jet["pz"]
             pt = np.sqrt(px**2 + py**2)
-            p = np.sqrt(px**2 + py**2 + pz**2)
-            cos_theta = pz / p
-            theta = np.arccos(cos_theta)
-            eta = -np.log(np.tan(theta / 2))
-            phi = np.arctan2(py, px)
+            eta, phi = calculate_jet_eta_phi(px, py, pz)
 
             jet["pt"] = pt
             jet["eta"] = eta
@@ -109,20 +118,13 @@ def read_root():
             pt_list.append(pt)
             eta_list.append(eta)
             phi_list.append(phi)
-            # delta_phi_list.append(delta_phi)
-        delta_phi_list = d0meson_phi - phi_list
-        delta_eta_list = d0meson_eta - eta_list
-        delta_R_list = np.sqrt(delta_eta_list**2 + delta_phi_list**2)
-        closest_jets = delta_R_list[delta_R_list < R]
-        logging.info(closest_jets)
+
+        find_D0meson_in_jets(d0meson_phi, d0meson_eta, phi_list, eta_list, R)
 
         # pd.set_option('display.max_rows', len(df))
         sorted_jets = sorted(jets, key=lambda jet: -jet["pt"])
         [jet.pt for jet in sorted_jets]
         # return sorted_pt
-
-        # print(delta_phi)
-        # pprint(delta_phi_list)
     # print("Clustering with", jet_def.description())
 
 
