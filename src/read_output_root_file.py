@@ -26,18 +26,30 @@ def calculate_jet_eta_phi(px, py, pz):
     return eta, phi
 
 
-def find_D0meson_in_jets(d0_phi, d0_eta, jet_phi_list, jet_eta_list, R) -> float | None:
+def find_D0meson_in_jets(d0_phi, d0_eta, jet_phi_list, jet_eta_list, R) -> int | None:
     D0_jet = None
     delta_phi_list = d0_phi - jet_phi_list
     delta_eta_list = d0_eta - jet_eta_list
     delta_R_list = np.sqrt(delta_eta_list**2 + delta_phi_list**2)
     closest_jets = delta_R_list[delta_R_list < R]
     logging.info(closest_jets)
+
+    """
+    # array with number of jets
+    # now, find the minimum delta_r value in the array and its index
+    # label that index as 1 (one can add dictionary for labelling jet)
+    # and label rest of the delta_r values as 0
+    """
+
     if len(closest_jets) > 1:
         D0_jet = np.min(closest_jets)
+        # index = list(closest_jets).index(D0_jet)
     elif len(closest_jets) == 1:
         D0_jet = closest_jets[0]
-    return D0_jet
+    else:
+        return None
+    index = np.where(delta_R_list == D0_jet)[0][0]
+    return index
 
 
 def read_root():
@@ -80,28 +92,18 @@ def read_root():
 
         # define jet radius
         R = 0.7
-        # pt_min = 300
-        # eta_max = 0.9
         # Define jet by providing the name of algorithm and R value
         jet_def = fastjet.JetDefinition(fastjet.antikt_algorithm, R)
         # make the clusters by feeding the paricle array as well as "jet def"
         cs = fastjet._pyjet.AwkwardClusterSequence(particle_array, jet_def)
-
         raw_jets = cs.inclusive_jets()  # .to_list()
         # constituent_jets = cs.constituents()#.to_list()
-        # jet_selector = fastjet.SelectorPtMin(pt_min) & fastjet.SelectorAbsEtaMax(eta_max)
-
-        # jets_array = np.array([fastjet.PseudoJet(j.px(), j.py(), j.pz(), j.E()) for j in jets])
-        # jets_vector = fastjet.vectorPJ()
-        # for jet in jets_array:
-        #     jets_vector.append(jet)
-        #     jets_vector.push_back(jet)
-        # selected_jets = jet_selector(jets_vector)
 
         pt_list = []
         phi_list = []
         eta_list = []
         jets = []
+        D0_list = []
         # loop on all created jets
         for jet in raw_jets:
             px = jet["px"]
@@ -113,13 +115,17 @@ def read_root():
             jet["pt"] = pt
             jet["eta"] = eta
             jet["phi"] = phi
+            jet["D0"] = 0
 
             jets.append(jet)
             pt_list.append(pt)
             eta_list.append(eta)
             phi_list.append(phi)
+            D0_list.append(0)
 
-        find_D0meson_in_jets(d0meson_phi, d0meson_eta, phi_list, eta_list, R)
+        index = find_D0meson_in_jets(d0meson_phi, d0meson_eta, phi_list, eta_list, R)
+        # label jet as 1 for index found from "find_D0meson_in_jets" function
+        jets[index]["D0"] = 1
 
         # pd.set_option('display.max_rows', len(df))
         sorted_jets = sorted(jets, key=lambda jet: -jet["pt"])
