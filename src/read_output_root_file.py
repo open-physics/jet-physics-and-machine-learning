@@ -7,6 +7,11 @@ import fastjet._pyjet
 import numpy as np
 import uproot
 
+workdir = os.path.realpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+)
+file_name = f"{workdir}/data/uproot_jet_tagging.root"
+
 
 def root_file():
     """define path to root file"""
@@ -26,7 +31,9 @@ def calculate_jet_eta_phi(px, py, pz):
     return eta, phi
 
 
-def find_D0meson_in_jets(d0_phi, d0_eta, jet_phi_list, jet_eta_list, R) -> int | None:
+def find_D0meson_in_jets(
+    d0_phi, d0_eta, jet_phi_list, jet_eta_list, R, kwargs
+) -> int | None:
     D0_jet = None
     delta_phi_list = d0_phi - jet_phi_list
     delta_eta_list = d0_eta - jet_eta_list
@@ -43,7 +50,6 @@ def find_D0meson_in_jets(d0_phi, d0_eta, jet_phi_list, jet_eta_list, R) -> int |
 
     if len(closest_jets) > 1:
         D0_jet = np.min(closest_jets)
-        # index = list(closest_jets).index(D0_jet)
     elif len(closest_jets) == 1:
         D0_jet = closest_jets[0]
     else:
@@ -54,6 +60,8 @@ def find_D0meson_in_jets(d0_phi, d0_eta, jet_phi_list, jet_eta_list, R) -> int |
 
 def read_root():
     file_root = root_file()
+
+    f = uproot.recreate(file_name)
 
     # some CHECKS on root file:
     # pprint(file_root.keys())
@@ -76,7 +84,7 @@ def read_root():
     events = file_root.keys()
     particle_array = []
     # loop on no. of events
-    for event in events:
+    for e_index, event in enumerate(events):
         # assign each event as separate tree
         tree = file_root[event]
         eta = tree["eta"].array()
@@ -123,15 +131,32 @@ def read_root():
             phi_list.append(phi)
             D0_list.append(0)
 
-        index = find_D0meson_in_jets(d0meson_phi, d0meson_eta, phi_list, eta_list, R)
-        # label jet as 1 for index found from "find_D0meson_in_jets" function
-        jets[index]["D0"] = 1
+        kwargs = {"e_index": e_index, "pid": pid}
+
+        # Find jet index containing the D0 meson
+        for i in range(len(d0meson_phi)):
+            index = find_D0meson_in_jets(
+                np.array(d0meson_phi[i]),
+                np.array(d0meson_eta[i]),
+                phi_list,
+                eta_list,
+                R,
+                kwargs,
+            )
+            # label jet as 1 for index found from "find_D0meson_in_jets" function
+            if index is not None:
+                jets[index]["D0"] = 1
+
+        f["event_"] = {"jets": jets}
 
         # pd.set_option('display.max_rows', len(df))
         sorted_jets = sorted(jets, key=lambda jet: -jet["pt"])
         [jet.pt for jet in sorted_jets]
         # return sorted_pt
     # print("Clustering with", jet_def.description())
+
+    # with uproot.open("uproot_jet_tagging.root") as f1:
+    # f1.keys()
 
 
 if __name__ == "__main__":
