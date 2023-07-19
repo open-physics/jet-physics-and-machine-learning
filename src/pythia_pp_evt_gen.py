@@ -96,7 +96,7 @@ def main():
     all_events = []
     f = uproot.recreate(file_name)
     # uproot.recreate("uproot_pythia2.root")
-    for event in pythia(5):
+    for event in pythia(500):
         # sanity check: skip if event has no tracks or has no D0 meson
         # if np.abs(ev.pid)==421:
         if len(event.pt) <= 0:  # or d0 not in event.pid:
