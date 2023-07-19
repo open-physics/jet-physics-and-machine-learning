@@ -1,6 +1,5 @@
 # storing event using uproot and pickle file format
 import os
-import pickle
 
 import numpy as np
 import uproot
@@ -94,54 +93,54 @@ def main():
     pythia = Pythia8(evt_kin, seed=45, config=config)
 
     all_events = []
-    f = uproot.recreate(file_name)
-    # uproot.recreate("uproot_pythia2.root")
-    for event in pythia(500):
-        # sanity check: skip if event has no tracks or has no D0 meson
-        # if np.abs(ev.pid)==421:
-        if len(event.pt) <= 0:  # or d0 not in event.pid:
-            continue
+    with uproot.recreate(file_name) as f:
+        # uproot.recreate("uproot_pythia2.root")
+        for event in pythia(500):
+            # sanity check: skip if event has no tracks or has no D0 meson
+            # if np.abs(ev.pid)==421:
+            if len(event.pt) <= 0:  # or d0 not in event.pid:
+                continue
 
-        replace_children_with_parents(event)
+            replace_children_with_parents(event)
 
-        event_final = event[event.status == 1]
-        pid = event_final.pid
-        eta = np.array(event_final.eta)
-        phi = np.array(event_final.phi)
-        px = np.array(event_final.px)
-        py = np.array(event_final.py)
-        pz = np.array(event_final.pz)
-        en = np.array(event_final.en)
-        charge = event_final.charge
+            event_final = event[event.status == 1]
+            pid = event_final.pid
+            eta = np.array(event_final.eta)
+            phi = np.array(event_final.phi)
+            px = np.array(event_final.px)
+            py = np.array(event_final.py)
+            pz = np.array(event_final.pz)
+            en = np.array(event_final.en)
+            charge = event_final.charge
 
-        # create dictionary to store event properties event-by-event
-        single_event = {}
-        single_event["px"] = px
-        single_event["py"] = py
-        single_event["pz"] = pz
-        single_event["E"] = en
-        single_event["eta"] = eta
-        single_event["phi"] = phi
-        single_event["ch"] = charge
-        single_event["pid"] = pid
+            # create dictionary to store event properties event-by-event
+            single_event = {}
+            single_event["px"] = px
+            single_event["py"] = py
+            single_event["pz"] = pz
+            single_event["E"] = en
+            single_event["eta"] = eta
+            single_event["phi"] = phi
+            single_event["ch"] = charge
+            single_event["pid"] = pid
 
-        all_events.append(single_event)
-        f[f"event_{event.nevent-1}"] = single_event
+            all_events.append(single_event)
+            f[f"event_{event.nevent-1}"] = single_event
 
-    # store/write event properties using pickle
-    with open("array_store.pkl", "wb") as file:
-        pickle.dump(all_events, file)
+    # # store/write event properties using pickle
+    # with open("array_store.pkl", "wb") as file:
+    #     pickle.dump(all_events, file)
 
-    # retrieve event properties using pickle
-    with open("array_store.pkl", "rb") as file:
-        pickle.load(file)
+    # # retrieve event properties using pickle
+    # with open("array_store.pkl", "rb") as file:
+    #     pickle.load(file)
 
     # store/write event properties using uproot
     # with uproot.recreate("uproot_pythia.root") as f:
     #     f["all_event_data"] = {"all_events": all_events}
     # retrieve event properties using uproot
-    with uproot.open("uproot_pythia.root") as f1:
-        f1.keys()
+    # with uproot.open(file_name) as f1:
+    #     f1.keys()
 
 
 if __name__ == "__main__":
