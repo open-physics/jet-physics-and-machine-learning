@@ -123,6 +123,7 @@ def read_root():
             jet["pt"] = pt
             jet["eta"] = eta
             jet["phi"] = phi
+            # Label each jet with 0, i.e. it does not contain D0 by default.
             jet["D0"] = 0
 
             jets.append(jet)
@@ -144,6 +145,7 @@ def read_root():
                 kwargs,
             )
             # label jet as 1 for index found from "find_D0meson_in_jets" function
+            # Now change the label if the jet contains D0
             if index is not None:
                 jets[index]["D0"] = 1
 
