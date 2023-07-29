@@ -1,4 +1,4 @@
-""" Read root file using uproot """
+""" Reconstruct and tag jets """
 # import time
 import logging
 import os
