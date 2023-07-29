@@ -1,4 +1,4 @@
-# storing event using uproot and pickle file format
+""" Generate pp collision events with Pythia8. """
 import os
 
 import numpy as np
