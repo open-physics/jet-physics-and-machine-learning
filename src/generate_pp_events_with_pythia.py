@@ -13,6 +13,24 @@ workdir = os.path.realpath(
 )
 file_name = f"{workdir}/data/uproot_pythia.root"
 
+charm_hadrons = {
+    "D0Meson": 421,
+    "DPlusMeson": 411,
+    "DstarPlusMeson": 413,
+    "DStragePlusMeson": 431,
+    "Dstar0Meson": 423,
+    "LambdaCharmPlus": 4122,
+    "LambdaCharm_2595_Plus": 14122,
+    "LambdaCharm_2625_Plus": 104122,
+    "LambdaCharm_2880_Plus": 204126,
+    "SigmaCharm_2455_0": 4112,
+    "SigmaCharm_2455_Plus": 4212,
+    "SigmaCharm_2455_PlusPlus": 4222,
+    "SigmaCharm_2520_0": 4114,
+    "SigmaCharm_2520_Plus": 4214,
+    "SigmaCharm_2520_PlusPlus": 4224,
+}
+
 
 def run_conditions():
     evt_kin = CenterOfMass(7 * TeV, particle1="proton", particle2="proton")
@@ -53,12 +71,10 @@ def replace_children_with_parents(event):
     # 4. Repreat step 3, until status is 1.
 
     # Replace D0 children with D0
-    D0meson = 421
-    if D0meson not in event.pid:
-        return
+
     for i in range(len(event)):
         # Step 1
-        if event.pid[i] == D0meson:
+        if event.pid[i] in charm_hadrons.values():
             # Steps 2, 3, 4
             final_generation = find_final_generation(event, i)
             for particle_index in final_generation:
