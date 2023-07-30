@@ -73,10 +73,8 @@ def find_indices(pid, values):
 
     indices = []
     for i in range(len(pid)):
-        if pid[i] in values:
+        if np.abs(pid[i]) in values:
             indices.append((i,))
-        if len(values) == 2 and pid[i] == values[1]:
-            indices[0] += (i,)
     return indices
 
 

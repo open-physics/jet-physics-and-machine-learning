@@ -74,7 +74,7 @@ def replace_children_with_parents(event):
 
     for i in range(len(event)):
         # Step 1
-        if event.pid[i] in charm_hadrons.values():
+        if np.abs(event.pid[i]) in charm_hadrons.values():
             # Steps 2, 3, 4
             final_generation = find_final_generation(event, i)
             for particle_index in final_generation:
