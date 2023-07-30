@@ -7,6 +7,8 @@ import fastjet._pyjet
 import numpy as np
 import uproot
 
+from generate_pp_events_with_pythia import charm_hadrons
+
 workdir = os.path.realpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 )
@@ -31,12 +33,12 @@ def calculate_jet_eta_phi(px, py, pz):
     return eta, phi
 
 
-def find_D0meson_in_jets(
-    d0_phi, d0_eta, jet_phi_list, jet_eta_list, R, kwargs
+def find_charm_hadron_in_jets(
+    charm_phi, charm_eta, jet_phi_list, jet_eta_list, R, kwargs
 ) -> int | None:
-    D0_jet = None
-    delta_phi_list = d0_phi - jet_phi_list
-    delta_eta_list = d0_eta - jet_eta_list
+    charm_jet = None
+    delta_phi_list = charm_phi - jet_phi_list
+    delta_eta_list = charm_eta - jet_eta_list
     delta_R_list = np.sqrt(delta_eta_list**2 + delta_phi_list**2)
     closest_jets = delta_R_list[delta_R_list < R]
     logging.info(closest_jets)
@@ -49,13 +51,34 @@ def find_D0meson_in_jets(
     """
 
     if len(closest_jets) > 1:
-        D0_jet = np.min(closest_jets)
+        charm_jet = np.min(closest_jets)
     elif len(closest_jets) == 1:
-        D0_jet = closest_jets[0]
+        charm_jet = closest_jets[0]
     else:
         return None
-    index = np.where(delta_R_list == D0_jet)[0][0]
+    index = np.where(delta_R_list == charm_jet)[0][0]
     return index
+
+
+def find_indices(pid, values):
+    """Finds the indices of the given values in the list `pid`.
+
+    Args:
+      pid: The list to search.
+      values: The values to find the indices of.
+
+    Returns:
+      A list of tuples, where each tuple contains the indices of the corresponding
+      value in the list `pid`.
+    """
+
+    indices = []
+    for i in range(len(pid)):
+        if pid[i] in values:
+            indices.append((i,))
+        if len(values) == 2 and pid[i] == values[1]:
+            indices[0] += (i,)
+    return indices
 
 
 def read_root():
@@ -91,10 +114,13 @@ def read_root():
         phi = tree["phi"].array()
         pid = tree["pid"].array()
 
-        # eta and phi of D0meson
-        index = np.where(pid == 421)
-        d0meson_eta = eta[index]
-        d0meson_phi = phi[index]
+        # eta and phi of charm hadron
+        indices = find_indices(pid=pid, values=charm_hadrons.values())
+        charm_eta = []
+        charm_phi = []
+        for index in indices:
+            charm_eta.append(eta[index])
+            charm_phi.append(phi[index])
 
         particle_array = tree.arrays()
 
@@ -111,7 +137,7 @@ def read_root():
         phi_list = []
         eta_list = []
         jets = []
-        D0_list = []
+        charm_list = []
         # loop on all created jets
         for jet in raw_jets:
             px = jet["px"]
@@ -123,37 +149,36 @@ def read_root():
             jet["pt"] = pt
             jet["eta"] = eta
             jet["phi"] = phi
-            # Label each jet with 0, i.e. it does not contain D0 by default.
-            jet["D0"] = 0
+            # Label each jet with 0, i.e. it does not contain charm meson by default.
+            jet["charm"] = 0
 
             jets.append(jet)
             pt_list.append(pt)
             eta_list.append(eta)
             phi_list.append(phi)
-            D0_list.append(0)
+            charm_list.append(0)
 
         kwargs = {"e_index": e_index, "pid": pid}
 
-        # Find jet index containing the D0 meson
-        for i in range(len(d0meson_phi)):
-            index = find_D0meson_in_jets(
-                np.array(d0meson_phi[i]),
-                np.array(d0meson_eta[i]),
+        # Find jet index containing the charm meson
+        for i in range(len(charm_phi)):
+            index = find_charm_hadron_in_jets(
+                np.array(charm_phi[i]),
+                np.array(charm_eta[i]),
                 phi_list,
                 eta_list,
                 R,
                 kwargs,
             )
-            # label jet as 1 for index found from "find_D0meson_in_jets" function
-            # Now change the label if the jet contains D0
+            # label jet as 1 for index found from "find_charm_hadron_in_jets" function
+            # Now change the label if the jet contains charm hadron
             if index is not None:
-                jets[index]["D0"] = 1
-
-        f["event_"] = {"jets": jets}
+                jets[index]["charm"] = 1
 
         # pd.set_option('display.max_rows', len(df))
         sorted_jets = sorted(jets, key=lambda jet: -jet["pt"])
-        [jet.pt for jet in sorted_jets]
+        # [jet.pt for jet in sorted_jets]
+        f["event_"] = {"jets": sorted_jets[:10]}
         # return sorted_pt
     # print("Clustering with", jet_def.description())
 
