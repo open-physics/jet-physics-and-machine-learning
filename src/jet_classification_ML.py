@@ -41,6 +41,8 @@ def root_to_csv():
         dfs = []
         tree = file_root[event]
         for key in tree.keys():
+            # if key in ['jets_pt', 'jets_eta', 'jets_phi']:
+            #     continue
             value = tree[key].array()
             end = len(value)
             data_frame = pd.DataFrame(
@@ -74,10 +76,7 @@ def load_dataset(data_file):
 
 def pred_score(ps_estimator, ps_train_X, ps_test_X, ps_train_y, ps_test_y):
     # predict accuracy score for each classification model
-    if isinstance(ps_estimator, DeepNeuralNetwork()):
-        ps_estimator.fit(ps_train_X, ps_train_y, batch_size=32, epochs=100)
-    else:
-        ps_estimator.fit(ps_train_X, ps_train_y)
+    ps_estimator.fit(ps_train_X, ps_train_y)
     prediction = ps_estimator.predict(ps_test_X)
     confusion = confusion_matrix(ps_test_y, prediction)
     accuracy = accuracy_score(ps_test_y, prediction)
@@ -108,34 +107,36 @@ def best_estimator_parameter_accuracy(b_estimator, b_train_X, b_train_y):
 
 
 class DeepNeuralNetwork:
-    def __init__(self):
-        self.dnn = None
-
-    def model(self):
-        if self.dnn is not None:
-            return self.dnn
-        self.dnn = tf.keras.Sequential(
+    def __init__(self, input_shape, output_shape, batch_size, epochs):
+        self.model = tf.keras.Sequential(
             [
-                tf.keras.layers.Dense(128, activation="relu", input_shape=(4,)),
+                tf.keras.layers.Dense(128, activation="relu", input_shape=input_shape),
                 tf.keras.layers.Dense(64, activation="relu"),
                 tf.keras.layers.Dense(32, activation="relu"),
                 tf.keras.layers.Dense(8, activation="relu"),
-                tf.keras.layers.Dense(1, activation="sigmoid"),
+                tf.keras.layers.Dense(output_shape, activation="sigmoid"),
             ]
         )
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-        self.dnn.compile(
+        self.model.compile(
             loss="binary_crossentropy", optimizer=optimizer, metrics=["accuracy"]
         )
-        return self.dnn
+        self.batch_size = batch_size
+        self.epochs = epochs
 
-    def predict(self, x_train):
-        pass
+    def fit(self, x_train, y_train):
+        self.model.fit(x_train, y_train, batch_size=self.batch_size, epochs=self.epochs)
+
+    def predict(self, x_test):
+        predict = self.model.predict(x_test)
+        threshold = 0.5
+        prediction = np.where(predict >= threshold, 1, 0)
+        return prediction
 
 
 def main():
     dataset = load_dataset("tagged_D0meson_jets.csv")
-    X = dataset.iloc[:, :-1].values
+    X = dataset.iloc[:, 1:-1].values
     y = dataset.iloc[:, -1].values
 
     # Split the training and test data
@@ -159,7 +160,9 @@ def main():
         "random_forest": RandomForestClassifier(
             criterion="entropy", n_estimators=10, random_state=0
         ),
-        "dnn": DeepNeuralNetwork(),
+        "dnn": DeepNeuralNetwork(
+            input_shape=(7,), output_shape=1, batch_size=32, epochs=10
+        ),
         # "xgboost": XGBClassifier(),
     }
 
@@ -168,7 +171,7 @@ def main():
             estimator, train_X, test_X, train_y, test_y
         )
 
-        models_and_predictions[f"{estimator_name}"] = {
+        models_and_predictions[estimator_name] = {
             "prediction": prediction,
             "confusion": confusion,
             "accuracy": accuracy,
