@@ -17,6 +17,11 @@ from sklearn.tree import DecisionTreeClassifier
 # from xgboost import XGBClassifier
 
 
+def flatten_list(list_to_flatten):
+    flattened_list = [element for sublist in list_to_flatten for element in sublist]
+    return flattened_list
+
+
 def load_root_file():
     """define project directory path"""
     workdir = os.path.realpath(
@@ -110,10 +115,11 @@ class DeepNeuralNetwork:
     def __init__(self, input_shape, output_shape, batch_size, epochs):
         self.model = tf.keras.Sequential(
             [
-                tf.keras.layers.Dense(128, activation="relu", input_shape=input_shape),
+                tf.keras.layers.Dense(16, activation="relu", input_shape=input_shape),
+                tf.keras.layers.Dense(32, activation="relu"),
                 tf.keras.layers.Dense(64, activation="relu"),
                 tf.keras.layers.Dense(32, activation="relu"),
-                tf.keras.layers.Dense(8, activation="relu"),
+                tf.keras.layers.Dense(16, activation="relu"),
                 tf.keras.layers.Dense(output_shape, activation="sigmoid"),
             ]
         )
@@ -131,13 +137,27 @@ class DeepNeuralNetwork:
         predict = self.model.predict(x_test)
         threshold = 0.5
         prediction = np.where(predict >= threshold, 1, 0)
-        return prediction
+        return np.array(flatten_list(list(prediction)))
 
 
 def main():
     dataset = load_dataset("tagged_D0meson_jets.csv")
-    X = dataset.iloc[:, 1:-1].values
-    y = dataset.iloc[:, -1].values
+    # Select jets with positive mass
+    dataset = dataset[dataset["jets_mass_sq"] >= 0]
+    # 1. Select charm jets
+    dataset_charm = dataset[dataset["jets_charm"] == 1]
+    # 2. Select an equal number of non-charm jets, in a randomized fashion
+    dataset_non = dataset[dataset["jets_charm"] == 0].sample(len(dataset_charm))
+    # Combine the two dataframes.
+    combined_dataset = pd.concat([dataset_charm, dataset_non], ignore_index=True)
+    # Randomly mix the rows in the combined dataframe.
+    combined_dataset = combined_dataset.sample(frac=1, random_state=42).reset_index(
+        drop=True
+    )
+    shuffled_dataset = pd.DataFrame(combined_dataset)
+
+    X = shuffled_dataset.iloc[:, 1:-1].values
+    y = shuffled_dataset.iloc[:, -1].values
 
     # Split the training and test data
     train_X, test_X, train_y, test_y = train_test_split(
@@ -161,7 +181,7 @@ def main():
             criterion="entropy", n_estimators=10, random_state=0
         ),
         "dnn": DeepNeuralNetwork(
-            input_shape=(7,), output_shape=1, batch_size=32, epochs=10
+            input_shape=(8,), output_shape=1, batch_size=32, epochs=10
         ),
         # "xgboost": XGBClassifier(),
     }
@@ -180,7 +200,6 @@ def main():
     """ Will check later """
     # # svc_estimator = SVC(kernel="rbf", random_state=0)
     # # b_estimator, b_accuracy, b_parameters = best_estimator_parameter_accuracy(svc_estimator, train_X, train_y)
-    # breakpoint()
 
     # svc = SVC(kernel="rbf", random_state=0)
     # svc.fit(train_X, train_y)
