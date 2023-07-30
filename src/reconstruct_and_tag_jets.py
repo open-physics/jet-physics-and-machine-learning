@@ -1,5 +1,4 @@
 """ Reconstruct and tag jets """
-# import time
 import logging
 import os
 
@@ -86,17 +85,6 @@ def read_root():
 
     f = uproot.recreate(file_name)
 
-    # some CHECKS on root file:
-    # pprint(file_root.keys())
-    # pprint(file_root.values())
-    # file_root.classnames()
-    # file_root["event_0"].show()
-    # file_root["event_0"].typenames()
-    # file_root["event_0"].all_members
-    # file_root["event_0"]["tr_eta"].array()
-    # file_root["event_0"]["tr_eta"].array(library="np")
-    # file_root["event_0"]["tr_eta"].array(library="pd")
-
     """
     Information related to root file
     # Number of events are stored in a root file as different trees
@@ -106,15 +94,15 @@ def read_root():
 
     events = file_root.keys()
     particle_array = []
-    # loop on no. of events
+    # Loop on no. of events
     for e_index, event in enumerate(events):
-        # assign each event as separate tree
+        # Assign each event as separate tree
         tree = file_root[event]
         eta = tree["eta"].array()
         phi = tree["phi"].array()
         pid = tree["pid"].array()
 
-        # eta and phi of charm hadron
+        # Make a list of the eta's and phi's of all charm hadrons
         indices = find_indices(pid=pid, values=charm_hadrons.values())
         charm_eta = []
         charm_phi = []
@@ -124,11 +112,11 @@ def read_root():
 
         particle_array = tree.arrays()
 
-        # define jet radius
+        # Define jet radius
         R = 0.7
         # Define jet by providing the name of algorithm and R value
         jet_def = fastjet.JetDefinition(fastjet.antikt_algorithm, R)
-        # make the clusters by feeding the paricle array as well as "jet def"
+        # Make the clusters by feeding the paricle array as well as "jet def"
         cs = fastjet._pyjet.AwkwardClusterSequence(particle_array, jet_def)
         raw_jets = cs.inclusive_jets()  # .to_list()
         # constituent_jets = cs.constituents()#.to_list()
@@ -143,12 +131,15 @@ def read_root():
             px = jet["px"]
             py = jet["py"]
             pz = jet["pz"]
+            en = jet["E"]
             pt = np.sqrt(px**2 + py**2)
             eta, phi = calculate_jet_eta_phi(px, py, pz)
+            mass_sq = en**2 - (px**2 + py**2 + pz**2)
 
             jet["pt"] = pt
             jet["eta"] = eta
             jet["phi"] = phi
+            jet["mass_sq"] = mass_sq
             # Label each jet with 0, i.e. it does not contain charm meson by default.
             jet["charm"] = 0
 
@@ -170,20 +161,13 @@ def read_root():
                 R,
                 kwargs,
             )
-            # label jet as 1 for index found from "find_charm_hadron_in_jets" function
+            # Label jet as 1 for index found from "find_charm_hadron_in_jets" function
             # Now change the label if the jet contains charm hadron
             if index is not None:
                 jets[index]["charm"] = 1
 
-        # pd.set_option('display.max_rows', len(df))
         sorted_jets = sorted(jets, key=lambda jet: -jet["pt"])
-        # [jet.pt for jet in sorted_jets]
-        f["event_"] = {"jets": sorted_jets[:10]}
-        # return sorted_pt
-    # print("Clustering with", jet_def.description())
-
-    # with uproot.open("uproot_jet_tagging.root") as f1:
-    # f1.keys()
+        f["event_"] = {"jets": sorted_jets}
 
 
 if __name__ == "__main__":
