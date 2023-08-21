@@ -1,3 +1,4 @@
+import logging
 import os
 
 import numpy as np
@@ -7,14 +8,12 @@ import uproot
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-
-# from xgboost import XGBClassifier
 
 
 def flatten_list(list_to_flatten):
@@ -46,8 +45,6 @@ def root_to_csv():
         dfs = []
         tree = file_root[event]
         for key in tree.keys():
-            # if key in ['jets_pt', 'jets_eta', 'jets_phi']:
-            #     continue
             value = tree[key].array()
             end = len(value)
             data_frame = pd.DataFrame(
@@ -88,31 +85,8 @@ def pred_score(ps_estimator, ps_train_X, ps_test_X, ps_train_y, ps_test_y):
     return prediction, confusion, accuracy
 
 
-def best_estimator_parameter_accuracy(b_estimator, b_train_X, b_train_y):
-    parameters = [
-        {"C": [0.25, 0.5, 0.75, 1], "kernel": ["linear"]},
-        {
-            "C": [0.25, 0.5, 0.75, 1],
-            "kernel": ["rbf"],
-            "gamma": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-        },
-    ]
-    grid_search = GridSearchCV(
-        estimator=b_estimator,
-        param_grid=parameters,
-        scoring="accuracy",
-        cv=10,
-        n_jobs=-1,
-    )
-    grid_search.fit(b_train_X, b_train_y)
-    b_accuracy = grid_search.best_score_
-    b_estimator = grid_search.best_estimator_
-    b_parameters = grid_search.best_params_
-    return b_estimator, b_accuracy, b_parameters
-
-
 class DeepNeuralNetwork:
-    def __init__(self, input_shape, output_shape, batch_size, epochs):
+    def __init__(self, input_shape, output_shape, batch_size, epochs, verbose):
         self.model = tf.keras.Sequential(
             [
                 tf.keras.layers.Dense(16, activation="relu", input_shape=input_shape),
@@ -129,15 +103,25 @@ class DeepNeuralNetwork:
         )
         self.batch_size = batch_size
         self.epochs = epochs
+        self.verbose = verbose
 
     def fit(self, x_train, y_train):
-        self.model.fit(x_train, y_train, batch_size=self.batch_size, epochs=self.epochs)
+        self.model.fit(
+            x_train,
+            y_train,
+            batch_size=self.batch_size,
+            epochs=self.epochs,
+            verbose=self.verbose,
+        )
 
     def predict(self, x_test):
         predict = self.model.predict(x_test)
         threshold = 0.5
         prediction = np.where(predict >= threshold, 1, 0)
         return np.array(flatten_list(list(prediction)))
+
+    def summary(self):
+        return self.model.summary()
 
 
 def main():
@@ -181,9 +165,8 @@ def main():
             criterion="entropy", n_estimators=10, random_state=0
         ),
         "dnn": DeepNeuralNetwork(
-            input_shape=(8,), output_shape=1, batch_size=32, epochs=10
+            input_shape=(8,), output_shape=1, batch_size=256, epochs=15, verbose=0
         ),
-        # "xgboost": XGBClassifier(),
     }
 
     for estimator_name, estimator in estimators.items():
@@ -196,47 +179,10 @@ def main():
             "confusion": confusion,
             "accuracy": accuracy,
         }
-
-    """ Will check later """
-    # # svc_estimator = SVC(kernel="rbf", random_state=0)
-    # # b_estimator, b_accuracy, b_parameters = best_estimator_parameter_accuracy(svc_estimator, train_X, train_y)
-
-    # svc = SVC(kernel="rbf", random_state=0)
-    # svc.fit(train_X, train_y)
-    # y_pred = svc.predict(test_X)
-    # print(y_pred)
-    #
-    # from sklearn.metrics import confusion_matrix, accuracy_score
-    # cm = confusion_matrix(test_y, y_pred)
-    # accuracy = accuracy_score(test_y, y_pred)
-    # print(cm)
-    # print(accuracy)
-    #
-    # # # applying k-Fold cross validation
-    # # from sklearn.model_selection import cross_val_score
-    # # accuracies = cross_val_score(estimator=svc, X=train_X, y = train_y, cv = 10)
-    # # print("Accuracy: {:.2f} %".format(accuracies.mean()*100))
-    # # #print("Standard Deviation: {.2f} %".format(accuracies.std()*100))
-    # # print("k-fold=10 gives accuracy score:", accuracies)
-    # # print("best :", sum(accuracies)/len(accuracies))
-    # # # print(accuracies.std()*100)
-    #
-    # # applying grid search technique to find best model and best parameters
-    # from sklearn.model_selection import GridSearchCV
-    # parameters = [{"C" : [0.25, 0.5, 0.75, 1], "kernel" : ["linear"]},
-    #               {"C" : [0.25, 0.5, 0.75, 1], "kernel" : ["rbf"], "gamma" : [0.1, 0.2, 0.3,0.4, 0.5, 0.6, 0.7, 0.8, 0.9]}]
-    # grid_search = GridSearchCV(estimator = svc,
-    #                            param_grid = parameters,
-    #                            scoring = "accuracy",
-    #                            cv = 10,
-    #                            n_jobs = -1)
-    # grid_search.fit(train_X, train_y)
-    # best_accuracy = grid_search.best_score_
-    # best_estimator = grid_search.best_estimator_
-    # best_parameters = grid_search.best_params_
-    # print("best_accuracy:", best_accuracy)
-    # print("best_estimator:", best_estimator)
-    # print("best_parameters: ", best_parameters)
+        if estimator_name == "dnn":
+            logging.info(f"this:{estimator.summary()}")
+            # logging.debug(f"this debug:{estimator.summary()}")
+            # logging.warning(f"this warning:{estimator.summary()}")
 
 
 if __name__ == "__main__":
