@@ -16,12 +16,6 @@ def run_conditions():
 
 
 def main():
-    # x = [np.array([1,2,2], dtype=np.int32),np.array([2,1,1,1,1], dtype=np.int32)]
-    # plt.hist(x,range=(1,3))
-    # plt.show()
-
-    # breakpoint()
-
     evt_kin = run_conditions()
     config = ["HardQCD:gg2ccbar = on"]
     pythia = Pythia8(evt_kin, seed=45, config=config)
@@ -41,12 +35,8 @@ def main():
     mult_zero = []
     for event in pythia(1):
         # sanity check: skip if event has no tracks or has no D0 meson
-        if len(event.pt) <= 0: #or d0 not in event.pid:
+        if len(event.pt) <= 0:  # or d0 not in event.pid:
             continue
-
-
-
-
 
         event_final = event.final_state()
         tr_eta = event_final.eta
@@ -82,8 +72,6 @@ def main():
         # multiplicity.append(len(event))
         mult.append(plus + minus + zero)
 
-
-    breakpoint()
     # Multiplicity
     # ------------
     sns.color_palette("pastel")
@@ -178,8 +166,7 @@ def main():
     # plt.show()
 
     # Fill the TTree with data
-    file["mytree"] = {'n_event':evt_list,
-                      'pt': pt_avg_list}
+    file["mytree"] = {"n_event": evt_list, "pt": pt_avg_list}
     # 'eta': eta_list,
     # 'phi': phi_list}
     # 'charge':chrg_list,
@@ -187,10 +174,11 @@ def main():
     # 'pid':pid_list}
 
     # Read the TTree back from the file to check the data was saved correctly
-    from pprint import pprint
-    with uproot.open("output_10k.root") as f:
-        # pprint(f["mytree"].arrays())
-        pprint(f["mytree"].keys())
+    # from pprint import pprint
+
+    # with uproot.open("output_10k.root") as f:
+    #     pprint(f["mytree"].arrays())
+    #     pprint(f["mytree"].keys())
 
 
 if __name__ == "__main__":
